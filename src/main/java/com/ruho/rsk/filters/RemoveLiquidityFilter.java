@@ -1,12 +1,14 @@
 package com.ruho.rsk.filters;
 
 import com.ruho.rsk.domain.RskDecodedData;
+import com.ruho.rsk.domain.RskInternalTransaction;
 import com.ruho.rsk.domain.RskItem;
 import com.ruho.rsk.domain.RskLogEvent;
 import com.ruho.rsk.filters.reports.RemoveLiquidityReport;
-import com.ruho.rsk.steps.StepsFilter;
+import com.ruho.rsk.utils.MethodIds;
 import com.ruho.rsk.utils.PoolContractSpecs;
 import com.ruho.rsk.utils.NumberParser;
+import com.ruho.rsk.utils.TokenContractSpecs;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -20,22 +22,24 @@ import static com.ruho.rsk.steps.StepsFilter.*;
 @Component
 public class RemoveLiquidityFilter implements AnyFilter {
     @Override
-    public RemoveLiquidityReport generateReport(RskItem transaction) {
+    public RemoveLiquidityReport generateReport(String ownWallet, RskItem transaction,
+                                                List<RskInternalTransaction> internalTransactions) {
         String contractAddress = findContractAddress(transaction);
         RskLogEvent liquidityAddedEvent = findLiquidityRemovedEvent(transaction);
         BigDecimal poolTokensAmount = findAmountParam(liquidityAddedEvent, "_poolTokenAmount");
         return PoolContractSpecs.findSpecsFromContract(contractAddress)
                 .map(poolContractSpecs -> {
-                    BigDecimal baseAmount = getTransferAmount(transaction, poolContractSpecs.getBaseSymbol());
-                    BigDecimal quoteAmount = getTransferAmount(transaction, poolContractSpecs.getQuoteSymbol());
+                    BigDecimal baseAmount = getTransferAmount(transaction, poolContractSpecs.getBaseToken());
+                    BigDecimal quoteAmount = getTransferAmount(transaction, poolContractSpecs.getQuoteToken());
                     return new RemoveLiquidityReport()
+                            .setMethodIds(methodsIdCalled(internalTransactions))
                             .setTransactionHash(transaction.getTransactionHash())
                             .setTime(LocalDateTime.ofInstant(transaction.getBlockSignedAt().toInstant(), ZoneOffset.UTC))
                             .setFees(transaction.getTotalFees())
                             .setSovsRewards(findRewardsAmount(transaction))
-                            .setBaseSymbol(poolContractSpecs.getBaseSymbol())
+                            .setBaseToken(poolContractSpecs.getBaseToken())
                             .setBaseAmount(baseAmount)
-                            .setQuotedSymbol(poolContractSpecs.getQuoteSymbol())
+                            .setQuotedToken(poolContractSpecs.getQuoteToken())
                             .setQuotedAmount(quoteAmount)
                             .setPoolTokenAmount(poolTokensAmount);
                 }).orElseThrow(() ->
@@ -43,16 +47,16 @@ public class RemoveLiquidityFilter implements AnyFilter {
                 );
     }
 
-    private BigDecimal getTransferAmount(RskItem transaction, String symbol) {
-        RskLogEvent transferEvent = findTransferEventBySymbol(transaction, symbol);
+    private BigDecimal getTransferAmount(RskItem transaction, TokenContractSpecs token) {
+        RskLogEvent transferEvent = findTransferEventByToken(transaction, token);
         return findAmountParam(transferEvent);
     }
 
-    private RskLogEvent findTransferEventBySymbol(RskItem transaction, String symbol) {
-        return findTransferEvents(transaction, symbol).stream()
-                .filter(logEvent -> logEvent.getSenderContract_ticker_symbol().contains(symbol))
+    private RskLogEvent findTransferEventByToken(RskItem transaction, TokenContractSpecs token) {
+        return findTransferEvents(transaction, token).stream()
+                .filter(logEvent -> logEvent.getSenderAddress().contains(token.getAddress()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("can't find transferEvent by " + symbol + " for " + transaction.getTransactionHash()));
+                .orElseThrow(() -> new IllegalStateException("can't find transferEvent by " + token + " for " + transaction.getTransactionHash()));
     }
 
     private String findContractAddress(RskItem transaction) {
@@ -63,7 +67,7 @@ public class RemoveLiquidityFilter implements AnyFilter {
     }
 
     private BigDecimal findRewardsAmount(RskItem transaction) {
-        List<RskLogEvent> transferEvents = findTransferEvents(transaction, "SOV");
+        List<RskLogEvent> transferEvents = findTransferEvents(transaction, TokenContractSpecs.SOV);
         Collections.reverse(transferEvents);
         RskLogEvent rewardsEvent = transferEvents.stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("can't find Transfer rewards event"));
@@ -75,12 +79,10 @@ public class RemoveLiquidityFilter implements AnyFilter {
 
 
     @Override
-    public boolean isTransactionInteresting(RskItem transaction) {
-        if(transaction.getLogEvents() == null) {
-            return false;
-        }
-        return transaction.getLogEvents().stream()
-                .anyMatch(StepsFilter::isRemoveLiquidity);
+    public boolean isTransactionInteresting(String ownWallet, RskItem transaction,
+                                            List<RskInternalTransaction> internalTransactions) {
+        List<String> methodIds = methodsIdCalled(internalTransactions);
+        return methodIds.contains(MethodIds.REMOVE_LIQUIDITY.getMethodId());
     }
 
 

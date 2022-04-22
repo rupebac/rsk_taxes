@@ -9,8 +9,11 @@ public class LogEventNames {
     public static final String ISSUANCE = "Issuance";
     public static final String TRANSFER = "Transfer";
     public static final String DELEGATE_STAKE_CHANGED = "DelegateStakeChanged";
+    public static final String TOKENS_STAKED = "TokensStaked";
     public static final String SPOT_SWAP = "TokenConverted";
     public static final String MINTED = "Minted";
+    public static final String BURNED = "Burned";
+    public static final String SENT = "Sent";
     public static final String EXECUTED = "Executed";
     public static final String WITHDRAWAL = "Withdrawal";
     public static final String EXTERNAL_SWAP = "ExternalSwap";

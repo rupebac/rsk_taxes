@@ -1,6 +1,7 @@
 package com.ruho.rsk.filters.reports;
 
 import com.ruho.rsk.filters.TransactionType;
+import com.ruho.rsk.utils.TokenContractSpecs;
 
 import java.math.BigDecimal;
 
@@ -8,13 +9,11 @@ public class RemoveLiquidityReport extends AbstractReport<RemoveLiquidityReport>
 
     private BigDecimal sovsRewards;
 
-    private String quotedSymbol;            // usdt ?
+    private TokenContractSpecs quotedToken;            // usdt ?
     private BigDecimal quotedAmount;
 
-    private String baseSymbol;              // btc ?
+    private TokenContractSpecs baseToken;              // btc ?
     private BigDecimal baseAmount;
-
-    private BigDecimal fees;    //always in BTC
 
     private BigDecimal poolTokenAmount;
 
@@ -37,12 +36,12 @@ public class RemoveLiquidityReport extends AbstractReport<RemoveLiquidityReport>
         return this;
     }
 
-    public String getQuotedSymbol() {
-        return quotedSymbol;
+    public TokenContractSpecs getQuotedToken() {
+        return quotedToken;
     }
 
-    public RemoveLiquidityReport setQuotedSymbol(String quotedSymbol) {
-        this.quotedSymbol = quotedSymbol;
+    public RemoveLiquidityReport setQuotedToken(TokenContractSpecs quotedToken) {
+        this.quotedToken = quotedToken;
         return this;
     }
 
@@ -55,12 +54,12 @@ public class RemoveLiquidityReport extends AbstractReport<RemoveLiquidityReport>
         return this;
     }
 
-    public String getBaseSymbol() {
-        return baseSymbol;
+    public TokenContractSpecs getBaseToken() {
+        return baseToken;
     }
 
-    public RemoveLiquidityReport setBaseSymbol(String baseSymbol) {
-        this.baseSymbol = baseSymbol;
+    public RemoveLiquidityReport setBaseToken(TokenContractSpecs baseToken) {
+        this.baseToken = baseToken;
         return this;
     }
 
@@ -73,17 +72,8 @@ public class RemoveLiquidityReport extends AbstractReport<RemoveLiquidityReport>
         return this;
     }
 
-    public BigDecimal getFees() {
-        return fees;
-    }
-
-    public RemoveLiquidityReport setFees(BigDecimal fees) {
-        this.fees = fees;
-        return this;
-    }
-
     public String getPoolTokenSymbol() {
-        return this.getBaseSymbol() + "-" + this.getQuotedSymbol() + "-LP";
+        return this.getBaseToken().getRskSymbol() + "-" + this.getQuotedToken().getRskSymbol() + "-LP";
     }
 
     @Override
@@ -95,11 +85,10 @@ public class RemoveLiquidityReport extends AbstractReport<RemoveLiquidityReport>
     public String toString() {
         return "RemoveLiquidityReport{" +
                 "sovsRewards=" + sovsRewards +
-                ", quotedSymbol='" + quotedSymbol + '\'' +
+                ", quotedSymbol='" + quotedToken + '\'' +
                 ", quotedAmount=" + quotedAmount +
-                ", baseSymbol='" + baseSymbol + '\'' +
+                ", baseSymbol='" + baseToken + '\'' +
                 ", baseAmount=" + baseAmount +
-                ", fees=" + fees +
                 "} " + super.toString();
     }
 }

@@ -1,20 +1,18 @@
 package com.ruho.rsk.filters.reports;
 
 import com.ruho.rsk.filters.TransactionType;
+import com.ruho.rsk.utils.TokenContractSpecs;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 public class AddLiquidityReport extends AbstractReport<AddLiquidityReport> {
-    private String quotedSymbol;            // usdt ?
+    private TokenContractSpecs quotedToken;            // usdt ?
     private BigDecimal quotedAmount;
 
-    private String baseSymbol;              // btc ?
+    private TokenContractSpecs baseToken;              // btc ?
     private BigDecimal baseAmount;
 
     private BigDecimal poolTokenAmount;
-
-    private BigDecimal fees;    //always in BTC
 
 
     public BigDecimal getPoolTokenAmount() {
@@ -26,12 +24,12 @@ public class AddLiquidityReport extends AbstractReport<AddLiquidityReport> {
         return this;
     }
 
-    public String getQuotedSymbol() {
-        return quotedSymbol;
+    public TokenContractSpecs getQuotedToken() {
+        return quotedToken;
     }
 
-    public AddLiquidityReport setQuotedSymbol(String quotedSymbol) {
-        this.quotedSymbol = quotedSymbol;
+    public AddLiquidityReport setQuotedToken(TokenContractSpecs quotedToken) {
+        this.quotedToken = quotedToken;
         return this;
     }
 
@@ -44,12 +42,12 @@ public class AddLiquidityReport extends AbstractReport<AddLiquidityReport> {
         return this;
     }
 
-    public String getBaseSymbol() {
-        return baseSymbol;
+    public TokenContractSpecs getBaseToken() {
+        return baseToken;
     }
 
-    public AddLiquidityReport setBaseSymbol(String baseSymbol) {
-        this.baseSymbol = baseSymbol;
+    public AddLiquidityReport setBaseToken(TokenContractSpecs baseToken) {
+        this.baseToken = baseToken;
         return this;
     }
 
@@ -62,27 +60,17 @@ public class AddLiquidityReport extends AbstractReport<AddLiquidityReport> {
         return this;
     }
 
-    public BigDecimal getFees() {
-        return fees;
-    }
-
-    public AddLiquidityReport setFees(BigDecimal fees) {
-        this.fees = fees;
-        return this;
-    }
-
     public String getPoolTokenSymbol() {
-        return this.getBaseSymbol() + "-" + this.getQuotedSymbol() + "-LP";
+        return this.getBaseToken().getRskSymbol() + "-" + this.getQuotedToken().getRskSymbol() + "-LP";
     }
 
     @Override
     public String toString() {
         return "AddLiquidityReport{" +
-                ", quotedSymbol='" + quotedSymbol + '\'' +
+                "quotedSymbol='" + quotedToken + '\'' +
                 ", quotedAmount=" + quotedAmount +
-                ", baseSymbol='" + baseSymbol + '\'' +
+                ", baseSymbol='" + baseToken + '\'' +
                 ", baseAmount=" + baseAmount +
-                ", fees=" + fees +
                 "} " + super.toString();
     }
 

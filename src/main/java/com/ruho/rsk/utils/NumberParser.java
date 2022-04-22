@@ -18,6 +18,6 @@ public class NumberParser {
     }
 
     public static BigDecimal numberFrom(String stringNumber) {
-        return numberFrom(stringNumber, 18);
+        return numberFrom(stringNumber.replaceAll(",", "").replaceAll("\\.", ""), 18);
     }
 }

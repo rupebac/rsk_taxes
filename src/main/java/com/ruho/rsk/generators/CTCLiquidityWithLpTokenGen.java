@@ -2,6 +2,7 @@ package com.ruho.rsk.generators;
 
 import com.ruho.rsk.filters.reports.AddLiquidityReport;
 import com.ruho.rsk.filters.reports.RemoveLiquidityReport;
+import com.ruho.rsk.utils.TokenContractSpecs;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -14,13 +15,13 @@ public class CTCLiquidityWithLpTokenGen {
         List<String[]> parts = new ArrayList<>();
         String description = String.format("add liquidity: %s %s and %s %s",
                                            addLiquidityReport.getBaseAmount(),
-                                           addLiquidityReport.getBaseSymbol(),
+                                           addLiquidityReport.getBaseToken().getRskSymbol(),
                                            addLiquidityReport.getQuotedAmount(),
-                                           addLiquidityReport.getQuotedSymbol());
-        parts.add(sellEntry(addLiquidityReport, addLiquidityReport.getBaseSymbol(), addLiquidityReport.getBaseAmount()));
-        parts.add(sellEntry(addLiquidityReport, addLiquidityReport.getQuotedSymbol(), addLiquidityReport.getQuotedAmount()));
+                                           addLiquidityReport.getQuotedToken());
+        parts.add(sellEntry(addLiquidityReport, addLiquidityReport.getBaseToken(), addLiquidityReport.getBaseAmount()));
+        parts.add(sellEntry(addLiquidityReport, addLiquidityReport.getQuotedToken(), addLiquidityReport.getQuotedAmount()));
         parts.add(
-                CTCPrinter.printToList(
+                CTCPrinter.printToArray(
                         addLiquidityReport.getTime(),
                         "buy",
                         addLiquidityReport.getPoolTokenSymbol(),
@@ -28,8 +29,8 @@ public class CTCLiquidityWithLpTokenGen {
                         "",
                         null,
                         addLiquidityReport.getFees(),
-                        description
-                ).toArray(new String[0])
+                        "", "", addLiquidityReport.getTransactionHash(),
+                        description)
         );
         return parts;
     }
@@ -39,13 +40,13 @@ public class CTCLiquidityWithLpTokenGen {
         List<String[]> parts = new ArrayList<>();
         String description = String.format("removed liquidity: %s %s and %s %s",
                                            removeLiquidityReport.getBaseAmount(),
-                                           removeLiquidityReport.getBaseSymbol(),
+                                           removeLiquidityReport.getBaseToken(),
                                            removeLiquidityReport.getQuotedAmount(),
-                                           removeLiquidityReport.getQuotedSymbol());
-        parts.add(buyEntry(removeLiquidityReport, removeLiquidityReport.getBaseSymbol(), removeLiquidityReport.getBaseAmount()));
-        parts.add(buyEntry(removeLiquidityReport, removeLiquidityReport.getQuotedSymbol(), removeLiquidityReport.getQuotedAmount()));
+                                           removeLiquidityReport.getQuotedToken());
+        parts.add(buyEntry(removeLiquidityReport, removeLiquidityReport.getBaseToken(), removeLiquidityReport.getBaseAmount()));
+        parts.add(buyEntry(removeLiquidityReport, removeLiquidityReport.getQuotedToken(), removeLiquidityReport.getQuotedAmount()));
         parts.add(
-                CTCPrinter.printToList(
+                CTCPrinter.printToArray(
                         removeLiquidityReport.getTime(),
                         "sell",
                         removeLiquidityReport.getPoolTokenSymbol(),
@@ -53,36 +54,36 @@ public class CTCLiquidityWithLpTokenGen {
                         "",
                         null,
                         removeLiquidityReport.getFees(),
-                        description
-                ).toArray(new String[0])
+                        "", "", removeLiquidityReport.getTransactionHash(),
+                        description)
         );
         return parts;
     }
 
 
-    private String[] sellEntry(AddLiquidityReport report, String symbol, BigDecimal amount) {
-        return CTCPrinter.printToList(
+    private String[] sellEntry(AddLiquidityReport report, TokenContractSpecs symbol, BigDecimal amount) {
+        return CTCPrinter.printToArray(
                 report.getTime(),
                 "sell",
-                symbol,
+                symbol.getPrintSymbol(),
                 amount,
                 "",
                 null,
-                null,
-                "AddLiquidityReport - Sell"
-        ).toArray(new String[0]);
+                report.getFees(),
+                "", "", report.getTransactionHash(),
+                "AddLiquidityReport - Sell");
     }
 
-    private String[] buyEntry(RemoveLiquidityReport report, String symbol, BigDecimal amount) {
-        return CTCPrinter.printToList(
+    private String[] buyEntry(RemoveLiquidityReport report, TokenContractSpecs symbol, BigDecimal amount) {
+        return CTCPrinter.printToArray(
                 report.getTime(),
                 "buy",
-                symbol,
+                symbol.getPrintSymbol(),
                 amount,
                 "",
                 null,
-                null,
-                "RemoveLiquidityReport - Buy"
-        ).toArray(new String[0]);
+                report.getFees(),
+                "", "", report.getTransactionHash(),
+                "RemoveLiquidityReport - Buy");
     }
 }

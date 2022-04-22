@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruho.rsk.domain.RskDto;
 import com.ruho.rsk.domain.RskInternalTransaction;
 import com.ruho.rsk.filters.reports.AnyReport;
-import com.ruho.rsk.filters.reports.DepositReport;
+import com.ruho.rsk.filters.reports.RskDepositReport;
+import com.ruho.rsk.filters.reports.RskWithdrawReport;
+import com.ruho.rsk.filters.reports.UnknownTransactionReport;
 import com.ruho.rsk.generators.CTCReportGenerator;
 import com.ruho.rsk.http.TransactionsFetcherService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +18,15 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SpringBootApplication
 public class RskTaxesApplication implements CommandLineRunner {
@@ -38,36 +43,64 @@ public class RskTaxesApplication implements CommandLineRunner {
 				.run(args);
 	}
 
-	void printReport(String walletAddress, List<AnyReport> entries, RskInternalTransaction[] internalTransactions){
+	List<AnyReport> printReport(String walletAddress, List<AnyReport> entries, RskInternalTransaction[] internalTransactions){
 		CTCReportGenerator reportGenerator = new CTCReportGenerator();
 		try {
-			reportGenerator.generatorReport(combineReports(walletAddress, entries, internalTransactions));
+			List<AnyReport> reports = combineReports(walletAddress, entries, internalTransactions);
+			reportGenerator.generatorReport(reports);
+			return reports;
 		} catch (IOException e) {
 			e.printStackTrace(System.err);
 		}
+		return new ArrayList<>();
 	}
 
 	private List<AnyReport> combineReports(String walletAddress, List<AnyReport> entries, RskInternalTransaction[] internalTransactions) {
-		Set<String> existingTransactions = entries.stream()
-				.map(AnyReport::getTransactionHash)
-				.map(String::toLowerCase)
-				.collect(Collectors.toSet());
+		Map<String, AnyReport> existingTransactions = entries.stream()
+				.collect(Collectors.toMap(s -> s.getTransactionHash().toLowerCase(), Function.identity()));
 		List<AnyReport> allReports = Arrays.stream(internalTransactions)
-				.filter(rskInternalTransaction -> rskInternalTransaction.getTo().equalsIgnoreCase(walletAddress))
-				.filter(rskInternalTransaction -> !existingTransactions.contains(rskInternalTransaction.getTransaction().toLowerCase()))
+				.filter(rskInternalTransaction -> {
+					String key = rskInternalTransaction.getTransaction().toLowerCase();
+					return !existingTransactions.containsKey(key) ||
+							existingTransactions.get(key) instanceof UnknownTransactionReport;
+				})
 				.filter(rskInternalTransaction -> rskInternalTransaction.getStatus().equalsIgnoreCase("SUCCESSFUL"))
-				.map(this::mapToReport)
+				.filter(rskInternalTransaction -> rskInternalTransaction.getValueAmount().doubleValue() > 0)
+				.flatMap(rskInternalTransaction -> {
+					if(rskInternalTransaction.getTo().equalsIgnoreCase(walletAddress)) {
+						return Stream.of(mapToDepositReport(rskInternalTransaction, existingTransactions));
+					} else if(rskInternalTransaction.getFrom().equalsIgnoreCase(walletAddress)) {
+						return Stream.of(mapToWithdrawReport(rskInternalTransaction, existingTransactions));
+					}
+					return Stream.empty();
+				})
 				.collect(Collectors.toList());
-		allReports.addAll(entries);
-		return allReports;
+		entries.addAll(allReports);
+		return entries;
 	}
 
-	private AnyReport mapToReport(RskInternalTransaction rskInternalTransaction) {
+	private AnyReport mapToDepositReport(RskInternalTransaction rskInternalTransaction, Map<String, AnyReport> allReports) {
 		Instant instant = Instant.ofEpochSecond(rskInternalTransaction.getTimestamp());
-		return new DepositReport()
+		AnyReport report = allReports.get(rskInternalTransaction.getTransaction());
+		return new RskDepositReport()
 				.setTransactionHash(rskInternalTransaction.getTransaction())
 				.setTime(LocalDateTime.ofInstant(instant, ZoneOffset.UTC))
-				.setSymbol(rskInternalTransaction.getValueSymbol())
+				.setToken(rskInternalTransaction.getValueSymbol())
+				.setFees(report == null ? BigDecimal.ZERO : report.getFees())
+				.setAmount(rskInternalTransaction.getValueAmount());
+	}
+
+	private AnyReport mapToWithdrawReport(RskInternalTransaction rskInternalTransaction, Map<String, AnyReport> allReports) {
+		Instant instant = Instant.ofEpochSecond(rskInternalTransaction.getTimestamp());
+		AnyReport report = allReports.get(rskInternalTransaction.getTransaction());
+		if(report == null) {
+			throw new IllegalStateException("withdraw transaction should be included in covalent. Check transaction " + rskInternalTransaction.getTransaction());
+		}
+		return new RskWithdrawReport()
+				.setTransactionHash(rskInternalTransaction.getTransaction())
+				.setTime(LocalDateTime.ofInstant(instant, ZoneOffset.UTC))
+				.setToken(rskInternalTransaction.getValueSymbol())
+				.setFees(report.getFees())
 				.setAmount(rskInternalTransaction.getValueAmount());
 	}
 
@@ -83,22 +116,21 @@ public class RskTaxesApplication implements CommandLineRunner {
 		String walletAddress = args[0];
 		String apiKey = args[1];
 		List<AnyReport> allEntries = new ArrayList<>();
+		RskInternalTransaction[] internalTransactions = internalTransactions(walletAddress);
 		do {
 			if (apiKey.equals("--classpath")) {
 				rskDto = fromClasspath(walletAddress, pageNumber);
 			} else {
 				rskDto = this.transactionsFetcherService.fetchTransactions(walletAddress, apiKey, pageNumber);
 			}
-			List<AnyReport> entries = transactionsParser.parse(rskDto);
-			entries.forEach(report -> {
-				System.out.println(report);
-				System.out.println("------------------");
-			});
+			List<AnyReport> entries = transactionsParser.parse(walletAddress, rskDto, internalTransactions);
 			allEntries.addAll(entries);
 			pageNumber++;
 		} while(rskDto.getData().getPagination().getHasMore());
-		RskInternalTransaction[] internalTransactions = internalTransactions(walletAddress);
-		printReport(walletAddress, allEntries, internalTransactions);
+		printReport(walletAddress, allEntries, internalTransactions).forEach(report -> {
+			System.out.println(report);
+			System.out.println("------------------");
+		});
 		System.out.println("completed!");
 		System.exit(0);
 	}

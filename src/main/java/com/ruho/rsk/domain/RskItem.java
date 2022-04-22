@@ -66,6 +66,9 @@ public class RskItem  implements Serializable {
     @JsonProperty("gas_quote_rate")
     private String gasQuoteRate;
 
+    @JsonProperty("fees_paid")
+    private String feesPaid;
+
     @JsonProperty("log_events")
     private List<RskLogEvent> logEvents;
 
@@ -205,6 +208,15 @@ public class RskItem  implements Serializable {
         this.gasQuoteRate = gasQuoteRate;
     }
 
+    public String getFeesPaid() {
+        return feesPaid;
+    }
+
+    public RskItem setFeesPaid(String feesPaid) {
+        this.feesPaid = feesPaid;
+        return this;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o)
@@ -227,13 +239,14 @@ public class RskItem  implements Serializable {
                 && Objects.equals(gasSpent, rskItem.gasSpent)
                 && Objects.equals(gasPrice, rskItem.gasPrice)
                 && Objects.equals(gasQuote, rskItem.gasQuote)
+                && Objects.equals(feesPaid, rskItem.feesPaid)
                 && Objects.equals(gasQuoteRate, rskItem.gasQuoteRate);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(blockSignedAt, blockHeight, transactionHash, transactionOffset, successful, fromAddress, fromAddressLabel,
-                            toAddress, toAddressLabel, value, valueQuote, gasOffered, gasSpent, gasPrice, gasQuote, gasQuoteRate);
+                            toAddress, toAddressLabel, value, valueQuote, gasOffered, gasSpent, gasPrice, gasQuote, gasQuoteRate, feesPaid);
     }
 
 

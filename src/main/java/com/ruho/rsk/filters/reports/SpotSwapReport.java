@@ -13,7 +13,6 @@ public class SpotSwapReport extends AbstractReport<SpotSwapReport> {
     private String targetSymbol;              // btc ?
     private BigDecimal targetAmount;
 
-    private BigDecimal fees;    //always in BTC
 
     public String getSourceSymbol() {
         return sourceSymbol;
@@ -51,15 +50,6 @@ public class SpotSwapReport extends AbstractReport<SpotSwapReport> {
         return this;
     }
 
-    public BigDecimal getFees() {
-        return fees;
-    }
-
-    public SpotSwapReport setFees(final BigDecimal fees) {
-        this.fees = fees;
-        return this;
-    }
-
     @Override
     public TransactionType getTransactionType() {
         return TransactionType.SPOT_SWAP;
@@ -72,7 +62,6 @@ public class SpotSwapReport extends AbstractReport<SpotSwapReport> {
                 ", sourceAmount=" + sourceAmount +
                 ", targetSymbol='" + targetSymbol + '\'' +
                 ", targetAmount=" + targetAmount +
-                ", fees=" + fees +
                 "} " + super.toString();
     }
 }

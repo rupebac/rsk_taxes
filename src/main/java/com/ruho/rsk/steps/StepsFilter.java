@@ -4,6 +4,7 @@ import com.ruho.rsk.domain.RskDecodedData;
 import com.ruho.rsk.domain.RskItem;
 import com.ruho.rsk.domain.RskLogEvent;
 import com.ruho.rsk.utils.NumberParser;
+import com.ruho.rsk.utils.TokenContractSpecs;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -37,7 +38,7 @@ public class StepsFilter {
         return logEvent.getDecoded().getName().equals(REWARDS_CLAIMED);
     }
 
-    private static boolean isTransfer(RskLogEvent logEvent) {
+    public static boolean isTransfer(RskLogEvent logEvent) {
         return logEvent.getDecoded() != null && TRANSFER.equals(logEvent.getDecoded().getName());
     }
 
@@ -47,10 +48,14 @@ public class StepsFilter {
                 .collect(Collectors.toList());
     }
 
-    public static List<RskLogEvent> findTransferEvents(RskItem transaction, String symbol) {
+    public static List<RskLogEvent> findTransferEvents(RskItem transaction, TokenContractSpecs token) {
         return findTransferEvents(transaction).stream()
-                .filter(logEvent -> logEvent.getSenderContract_ticker_symbol().contains(symbol))
+                .filter(logEvent -> logEvent.getSenderAddress().contains(token.getAddress()))
                 .collect(Collectors.toList());
+    }
+
+    public static RskLogEvent findSentEvent(RskItem transaction) {
+        return requireLastEvent(transaction, SENT);
     }
 
     public static RskLogEvent findWithdrawEvent(RskItem transaction) {
@@ -82,12 +87,29 @@ public class StepsFilter {
                 .orElseThrow(() -> new IllegalStateException("no " + name + " event found for " + transaction.getTransactionHash()));
     }
 
-    public static Optional<RskLogEvent> findFirstEvent(RskItem transaction, String name) {
+    public static RskLogEvent requireLastEvent(RskItem transaction, String name) {
+        return findLastEvent(transaction, name)
+                .orElseThrow(() -> new IllegalStateException("no " + name + " event found for " + transaction.getTransactionHash()));
+    }
+
+    public static List<RskLogEvent> findAllEvents(RskItem transaction, String name) {
         Objects.requireNonNull(name, "name can't be null here for transaction hash: " + transaction.getTransactionHash());
         return transaction.getLogEvents().stream()
                 .filter(logEvent -> logEvent.getDecoded() != null)
                 .filter(logEvent -> name.equals(logEvent.getDecoded().getName()))
-                .findFirst();
+                .collect(Collectors.toList());
+    }
+
+    public static Optional<RskLogEvent> findFirstEvent(RskItem transaction, String name) {
+        return findAllEvents(transaction, name).stream().findFirst();
+    }
+
+    public static Optional<RskLogEvent> findLastEvent(RskItem transaction, String name) {
+        Objects.requireNonNull(name, "name can't be null here for transaction hash: " + transaction.getTransactionHash());
+        return transaction.getLogEvents().stream()
+                .filter(logEvent -> logEvent.getDecoded() != null)
+                .filter(logEvent -> name.equals(logEvent.getDecoded().getName()))
+                .reduce((rskLogEvent, rskLogEvent2) -> rskLogEvent2);
     }
 
     public static Optional<RskDecodedData.Param> findFirstParam(RskLogEvent event, String paramName) {
@@ -114,6 +136,14 @@ public class StepsFilter {
         return isLogEventNamed(logEvent, MINTED);
     }
 
+    public static boolean isBurned(RskLogEvent logEvent) {
+        return isLogEventNamed(logEvent, BURNED);
+    }
+
+    public static boolean isSent(RskLogEvent logEvent) {
+        return isLogEventNamed(logEvent, SENT);
+    }
+
     public static boolean isExecuted(RskLogEvent logEvent) {
         return isLogEventNamed(logEvent, EXECUTED);
     }
@@ -128,5 +158,15 @@ public class StepsFilter {
 
     public static boolean isConversionSwap(RskLogEvent logEvent) {
         return isLogEventNamed(logEvent, CONVERSION);
+    }
+
+    public static List<RskLogEvent> findTransferEventsToMe(RskItem transaction, String ownWallet) {
+        return findTransferEvents(transaction).stream()
+                .filter(rskLogEvent ->
+                                findFirstParam(rskLogEvent, "to")
+                                        .filter(param -> ownWallet.equalsIgnoreCase(String.valueOf(param.getValue())))
+                                        .isPresent()
+                )
+                .collect(Collectors.toList());
     }
 }

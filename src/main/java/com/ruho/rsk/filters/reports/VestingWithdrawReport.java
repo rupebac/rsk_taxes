@@ -1,23 +1,22 @@
 package com.ruho.rsk.filters.reports;
 
 import com.ruho.rsk.filters.TransactionType;
+import com.ruho.rsk.utils.TokenContractSpecs;
 
 import java.math.BigDecimal;
 
 public class VestingWithdrawReport extends AbstractReport<VestingWithdrawReport> {
 
-    private String symbol;            // usdt ?
+    private TokenContractSpecs token;            // usdt ?
     private BigDecimal amount;
 
-    private BigDecimal fees;    //always in BTC
 
-
-    public String getSymbol() {
-        return symbol;
+    public TokenContractSpecs getToken() {
+        return token;
     }
 
-    public VestingWithdrawReport setSymbol(String symbol) {
-        this.symbol = symbol;
+    public VestingWithdrawReport setToken(TokenContractSpecs symbol) {
+        this.token = symbol;
         return this;
     }
 
@@ -30,15 +29,6 @@ public class VestingWithdrawReport extends AbstractReport<VestingWithdrawReport>
         return this;
     }
 
-    public BigDecimal getFees() {
-        return fees;
-    }
-
-    public VestingWithdrawReport setFees(final BigDecimal fees) {
-        this.fees = fees;
-        return this;
-    }
-
     @Override
     public TransactionType getTransactionType() {
         return TransactionType.SPOT_SWAP;
@@ -47,9 +37,8 @@ public class VestingWithdrawReport extends AbstractReport<VestingWithdrawReport>
     @Override
     public String toString() {
         return "VestingWithdrawReport{" +
-                "symbol='" + symbol + '\'' +
+                "symbol='" + token + '\'' +
                 ", amount=" + amount +
-                ", fees=" + fees +
                 "} " + super.toString();
     }
 }

@@ -1,7 +1,10 @@
 package com.ruho.rsk.domain;
 
 import com.google.common.base.Strings;
+import com.ruho.rsk.utils.NumberParser;
+import com.ruho.rsk.utils.TokenContractSpecs;
 
+import java.beans.Transient;
 import java.math.BigDecimal;
 
 public class RskInternalTransaction {
@@ -165,7 +168,7 @@ public class RskInternalTransaction {
         return new BigDecimal(parts[0]);
     }
 
-    public String getValueSymbol() {
+    public TokenContractSpecs getValueSymbol() {
         if(Strings.isNullOrEmpty(this.value)) {
             return null;
         }
@@ -173,7 +176,8 @@ public class RskInternalTransaction {
         if(parts.length != 2) {
             return null;
         }
-        return parts[1].replace("RBTC", "BTC");
+        String possibleSymbol = parts[1];
+        return TokenContractSpecs.fromRskSymbol(possibleSymbol);
     }
 
     public RskInternalTransaction setValue(String value) {
