@@ -66,7 +66,7 @@ public class CTCReportGenerator {
         return List.<String[]>of(
                 CTCPrinter.printToArray(
                         report.getTime(),
-                        "transfer-in",
+                        "transfer-out",
                         report.getStakedToken().getPrintSymbol(),
                         report.getStakedAmount(),
                         "",
