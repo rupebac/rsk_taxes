@@ -51,7 +51,7 @@ public class VestingWithdrawFilter implements AnyFilter {
                                             RskItem transaction,
                                             List<RskInternalTransaction> internalTransactions) {
         List<String> methodIds = methodsIdCalled(internalTransactions);
-        return methodIds.contains(MethodIds.VESTING_WITHDRAW.getMethodId());
+        return methodIds.contains(MethodIds.VESTING_WITHDRAW.getMethodId()) && StepsFilter.findTransferEventsToMe(transaction, ownWallet).size() > 0;
     }
 
 }
