@@ -1,7 +1,8 @@
 1) create a file in ~/.gradle/gradle.properties with something like:
 
-com.rsk.apiKey=<your covalenthq api key>
-com.rsk.wallet=<your rsk wallet address>
+com.rsk.apiKey=/your covalenthq api key/
+
+com.rsk.wallet=/your rsk wallet address/
 
 The api key should look like: ckey_XXXXXXXXXXXXXXX, get it by registering yourself in https://www.covalenthq.com
 the second one your wallet address starting with 0x
