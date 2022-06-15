@@ -1,6 +1,7 @@
 package com.ruho.rsk.utils;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -13,7 +14,8 @@ public enum PoolContractSpecs {
     BTC_SOV_POOL("0x09c5faf7723b13434abdf1a65ab1b667bc02a902", TokenContractSpecs.RBTC, TokenContractSpecs.SOV),
     BTC_MYNT_POOL("0x36263ac99ecdcf1ab20513d580b7d8d32d3c439d", TokenContractSpecs.RBTC, TokenContractSpecs.MYNT),
     BTC_FISH_POOL("0x35a74a38fd7728f1c6bc39ae3b18c974b7979ddd", TokenContractSpecs.RBTC, TokenContractSpecs.FISH),
-    BTC_RUSDT_POOL("0x40580e31cc14dbf7a0859f38ab36a84262df821d", TokenContractSpecs.RBTC, TokenContractSpecs.RUSDT);
+    BTC_RUSDT_POOL("0x40580e31cc14dbf7a0859f38ab36a84262df821d", TokenContractSpecs.RBTC, TokenContractSpecs.RUSDT),
+    BTC_RUSDT_POOL_2("0x9c4017d1c04cfa0f97fdc9505e33a0d8ac84817f", TokenContractSpecs.RBTC, TokenContractSpecs.RUSDT);
 
 
     private final TokenContractSpecs quoteSymbol;
@@ -47,8 +49,9 @@ public enum PoolContractSpecs {
     }
 
     public static Optional<PoolContractSpecs> findSpecsFromContract(String contractAddress) {
+        Objects.requireNonNull(contractAddress, "contractAddress can't be null");
         return Arrays.stream(values())
-                .filter(poolContractSpecs -> poolContractSpecs.getContractAddress().equals(contractAddress))
+                .filter(poolContractSpecs -> poolContractSpecs.getContractAddress().equalsIgnoreCase(contractAddress.trim()))
                 .findFirst();
     }
 }
