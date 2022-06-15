@@ -12,7 +12,8 @@ public enum PoolContractSpecs {
     BTC_BNB_POOL("0x8f3d24ab3510294f1466aa105f78901b90d79d4d", TokenContractSpecs.RBTC, TokenContractSpecs.BNB),
     BTC_SOV_POOL("0x09c5faf7723b13434abdf1a65ab1b667bc02a902", TokenContractSpecs.RBTC, TokenContractSpecs.SOV),
     BTC_MYNT_POOL("0x36263ac99ecdcf1ab20513d580b7d8d32d3c439d", TokenContractSpecs.RBTC, TokenContractSpecs.MYNT),
-    BTC_FISH_POOL("0x35a74a38fd7728f1c6bc39ae3b18c974b7979ddd", TokenContractSpecs.RBTC, TokenContractSpecs.FISH);
+    BTC_FISH_POOL("0x35a74a38fd7728f1c6bc39ae3b18c974b7979ddd", TokenContractSpecs.RBTC, TokenContractSpecs.FISH),
+    BTC_RUSDT_POOL("0x40580e31cc14dbf7a0859f38ab36a84262df821d", TokenContractSpecs.RBTC, TokenContractSpecs.RUSDT);
 
 
     private final TokenContractSpecs quoteSymbol;
