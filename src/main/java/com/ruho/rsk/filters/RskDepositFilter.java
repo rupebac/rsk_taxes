@@ -5,6 +5,7 @@ import com.ruho.rsk.domain.RskItem;
 import com.ruho.rsk.domain.RskLogEvent;
 import com.ruho.rsk.filters.reports.AnyReport;
 import com.ruho.rsk.filters.reports.RskDepositReport;
+import com.ruho.rsk.filters.reports.UnknownTransactionReport;
 import com.ruho.rsk.steps.StepsFilter;
 import com.ruho.rsk.utils.TokenContractSpecs;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,14 @@ public class RskDepositFilter implements AnyFilter {
                                     List<RskInternalTransaction> internalTransactions) {
         RskLogEvent transferEvent = StepsFilter.findTransferEvents(transaction).iterator().next();
         TokenContractSpecs tokenSpecs = TokenContractSpecs.fromTokenAddress(transferEvent.getSenderAddress());
-        BigDecimal amount = StepsFilter.findAmountParam(transferEvent);
+        BigDecimal amount = null;
+        try {
+            amount = StepsFilter.findAmountParam(transferEvent);
+        } catch(Exception e) {
+            return new UnknownTransactionReport()
+                    .setTransactionHash(transaction.getTransactionHash())
+                    .setTime(LocalDateTime.ofInstant(transaction.getBlockSignedAt().toInstant(), ZoneOffset.UTC));
+        }
         return new RskDepositReport()
                 .setMethodIds(methodsIdCalled(internalTransactions))
                 .setTransactionHash(transaction.getTransactionHash())

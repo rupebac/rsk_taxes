@@ -118,6 +118,7 @@ public class StepsFilter {
         } else {
             return event.getDecoded().getParams().stream()
                     .filter(param -> param.getName().equals(paramName))
+                    .filter(param -> param.getValue() != null)
                     .findFirst();
         }
     }
