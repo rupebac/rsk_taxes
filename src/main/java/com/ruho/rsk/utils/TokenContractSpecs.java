@@ -1,6 +1,7 @@
 package com.ruho.rsk.utils;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Stores all tokens contract
@@ -53,6 +54,7 @@ public enum TokenContractSpecs {
 
 
     public static TokenContractSpecs fromRskSymbol(String possibleSymbol) {
+        Objects.requireNonNull(possibleSymbol, "possibleSymbol can't be null here");
         return Arrays.stream(TokenContractSpecs.values())
                 .filter(tokenContractSpecs ->
                                 tokenContractSpecs.getRskSymbol().equalsIgnoreCase(possibleSymbol)
@@ -62,8 +64,9 @@ public enum TokenContractSpecs {
     }
 
     public static TokenContractSpecs fromTokenAddress(String address) {
+        Objects.requireNonNull(address, "address can't be null here");
         return Arrays.stream(values())
-                .filter(tokenContractSpecs -> tokenContractSpecs.getAddress().equalsIgnoreCase(address))
+                .filter(tokenContractSpecs -> tokenContractSpecs.getAddress().equalsIgnoreCase(address.trim()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Can't find TokenContract for address: " + address));
     }
