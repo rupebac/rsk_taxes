@@ -22,23 +22,24 @@ public class RskDepositFilter implements AnyFilter {
     @Override
     public AnyReport generateReport(String ownWallet, final RskItem transaction,
                                     List<RskInternalTransaction> internalTransactions) {
-        RskLogEvent transferEvent = StepsFilter.findTransferEvents(transaction).iterator().next();
-        TokenContractSpecs tokenSpecs = TokenContractSpecs.fromTokenAddress(transferEvent.getSenderAddress());
-        BigDecimal amount = null;
         try {
-            amount = StepsFilter.findAmountParam(transferEvent);
+            RskLogEvent transferEvent = StepsFilter.findTransferEvents(transaction).iterator().next();
+            TokenContractSpecs tokenSpecs = TokenContractSpecs.fromTokenAddress(transferEvent.getSenderAddress());
+            BigDecimal amount = StepsFilter.findAmountParam(transferEvent);
+            return new RskDepositReport()
+                    .setMethodIds(methodsIdCalled(internalTransactions))
+                    .setTransactionHash(transaction.getTransactionHash())
+                    .setToken(tokenSpecs)
+                    .setFees(transaction.getTotalFees())
+                    .setAmount(amount)
+                    .setTime(LocalDateTime.ofInstant(transaction.getBlockSignedAt().toInstant(), ZoneOffset.UTC));
         } catch(Exception e) {
+            e.printStackTrace(System.err);
             return new UnknownTransactionReport()
                     .setTransactionHash(transaction.getTransactionHash())
                     .setTime(LocalDateTime.ofInstant(transaction.getBlockSignedAt().toInstant(), ZoneOffset.UTC));
         }
-        return new RskDepositReport()
-                .setMethodIds(methodsIdCalled(internalTransactions))
-                .setTransactionHash(transaction.getTransactionHash())
-                .setToken(tokenSpecs)
-                .setFees(transaction.getTotalFees())
-                .setAmount(amount)
-                .setTime(LocalDateTime.ofInstant(transaction.getBlockSignedAt().toInstant(), ZoneOffset.UTC));
+
     }
 
     @Override
